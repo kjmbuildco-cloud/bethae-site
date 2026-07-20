@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bethae — Personalized bedtime stories, made for your family</title>
+<style>
+  :root {
+    --cranberry: #E0567A;
+    --cranberry-dark: #C43D60;
+    --amber: #F5A94E;
+    --cream: #FFF8F2;
+    --ink: #2B2230;
+    --ink-soft: #5C5260;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 6vw;
+  }
+  .logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--cranberry-dark);
+    letter-spacing: 0.5px;
+  }
+  .nav-cta {
+    background: var(--cranberry);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  header.hero {
+    text-align: center;
+    padding: 64px 6vw 48px;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  header.hero h1 {
+    font-size: 2.6rem;
+    line-height: 1.15;
+    margin: 0 0 20px;
+    color: var(--ink);
+  }
+  header.hero h1 span {
+    color: var(--cranberry-dark);
+  }
+  header.hero p {
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+    margin: 0 auto 32px;
+    max-width: 560px;
+  }
+  .cta-button {
+    display: inline-block;
+    background: var(--cranberry);
+    color: white;
+    padding: 16px 36px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 8px 24px rgba(224, 86, 122, 0.35);
+  }
+  .cta-sub {
+    margin-top: 14px;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+  .sample {
+    max-width: 900px;
+    margin: 40px auto 80px;
+    padding: 0 6vw;
+  }
+  .sample h2 {
+    text-align: center;
+    font-size: 1.6rem;
+    margin-bottom: 32px;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(43, 34, 48, 0.06);
+    border-top: 4px solid var(--amber);
+  }
+  .card h3 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    color: var(--cranberry-dark);
+  }
+  .card p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+  .how {
+    background: white;
+    padding: 64px 6vw;
+  }
+  .how-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .how h2 {
+    font-size: 1.6rem;
+    margin-bottom: 40px;
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 32px;
+    text-align: left;
+  }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--amber);
+    color: white;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .step h3 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+  }
+  .step p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+  }
+  footer {
+    text-align: center;
+    padding: 48px 6vw 64px;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+  .footer-cta {
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Bethae</div>
+  <a class="nav-cta" href="#signup">Join the test</a>
+</nav>
+
+<header class="hero">
+  <h1>A brand-new bedtime story for your child, <span>every single night.</span></h1>
+  <p>Bethae writes a personalized story for your kid — their name, their favorite things, their pace — and delivers it straight to your inbox before lights-out. We're testing with a small group of families before opening things up. Free to try, no strings attached.</p>
+  <a class="cta-button" href="#signup" id="signup">I want in</a>
+  <div class="cta-sub">Takes 2 minutes. No payment info needed for testers.</div>
+</header>
+
+<section class="sample">
+  <h2>What makes it different</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>Actually personalized</h3>
+      <p>Not a mad-lib with your kid's name dropped in — their real interests and favorite things drive the plot.</p>
+    </div>
+    <div class="card">
+      <h3>Every night, automatically</h3>
+      <p>No app to open, nothing to remember. A new story just shows up, right on schedule.</p>
+    </div>
+    <div class="card">
+      <h3>Built for calm</h3>
+      <p>Gentle themes, age-right vocabulary, and endings designed to wind down toward sleep — not rile back up.</p>
+    </div>
+  </div>
+</section>
+
+<section class="how">
+  <div class="how-inner">
+    <h2>How the test works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Tell us about your kid</h3>
+        <p>A quick form — name, age, favorite things, anything to avoid.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>We start writing</h3>
+        <p>Your first story is generated and reviewed before it ever reaches your inbox.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Stories arrive by email</h3>
+        <p>Read together, then tell us what you think — we're actively shaping this with your feedback.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-cta">
+    <a class="cta-button" href="#signup">Sign up to test Bethae</a>
+  </div>
+  &copy; 2026 Bethae. A family AI project, currently in testing.
+</footer>
+
+</body>
+</html>
