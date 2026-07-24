@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Thanks</title>
+<style>
+  body{max-width:480px;margin:80px auto;padding:0 24px;font-family:system-ui,-apple-system,sans-serif;text-align:center;color:#333}
+  .chip{display:inline-block;margin:6px;padding:10px 18px;border-radius:999px;border:1px solid #ccc;text-decoration:none;color:#333;font-size:15px}
+  h1{font-size:22px}
+</style>
+</head>
+<body>
+<div id="content">Loading&hellip;</div>
+<script>
+  var params = new URLSearchParams(window.location.search);
+  var rating = params.get('rating');
+  var story_id = params.get('story_id');
+  var tester_id = params.get('tester_id');
+  var final = params.get('final');
+  var el = document.getElementById('content');
+
+  var REASONS = [
+    ['too_scary', 'Too scary'],
+    ['not_like_kid', "Didn't sound like my kid"],
+    ['boring', 'Boring'],
+    ['other', 'Something else']
+  ];
+
+  if (final === '1') {
+    el.innerHTML = '<h1>Thanks &mdash; that’s really helpful.</h1><p>We read every one of these. See you tomorrow night.</p>';
+  } else if (rating === 'up') {
+    el.innerHTML = '<h1>So glad it landed!</h1><p>Thanks for letting us know &mdash; we’ll keep it up.</p>';
+  } else if (rating === 'down' && story_id && tester_id) {
+    var chips = REASONS.map(function (r) {
+      var q = new URLSearchParams({ story_id: story_id, tester_id: tester_id, reason: r[0] });
+      return '<a class="chip" href="/api/feedback-reason?' + q.toString() + '">' + r[1] + '</a>';
+    }).join('');
+    el.innerHTML =
+      '<h1>Thanks for the honest feedback.</h1>' +
+      '<p>Mind telling us a bit more? (Totally optional, one tap.)</p>' +
+      '<div>' + chips + '</div>';
+  } else {
+    el.innerHTML = '<h1>Thanks for the feedback.</h1>';
+  }
+</script>
+</body>
+</html>
