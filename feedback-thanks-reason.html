@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Anything else?</title>
+<style>
+  body{max-width:480px;margin:80px auto;padding:0 24px;font-family:system-ui,-apple-system,sans-serif;text-align:center;color:#333}
+  textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;font-family:inherit;font-size:15px;box-sizing:border-box}
+  button{padding:10px 24px;border-radius:999px;border:none;background:#333;color:#fff;font-size:15px;cursor:pointer;margin-top:14px}
+  h1{font-size:22px}
+</style>
+</head>
+<body>
+<h1>Got it, thank you.</h1>
+<p>Anything else you want to add? Totally optional.</p>
+<form method="POST" action="/api/feedback-freetext" id="f">
+  <input type="hidden" name="reason_id" id="reason_id" value="" />
+  <textarea name="note" rows="4" placeholder="(optional)"></textarea>
+  <div><button type="submit">Done</button></div>
+</form>
+<script>
+  var params = new URLSearchParams(window.location.search);
+  document.getElementById('reason_id').value = params.get('reason_id') || '';
+</script>
+</body>
+</html>
