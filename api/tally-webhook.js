@@ -1,22 +1,63 @@
 // Bethae — Tally form submission -> Supabase sync
 // Deployed as a Vercel serverless function at /api/tally-webhook
 //
-// Requires two environment variables to be set in the Vercel project
+// Requires these environment variables to be set in the Vercel project
 // (Project Settings -> Environment Variables), then redeploy:
 //   SUPABASE_URL           e.g. https://xxxxx.supabase.co
 //   SUPABASE_SERVICE_KEY   the "service_role" key from Supabase
 //                          (Project Settings -> API in Supabase)
+//   RESEND_API_KEY         for the welcome email (optional -- logs and
+//                          skips the email if missing, everything else
+//                          still works)
+//   FROM_EMAIL             optional, defaults to "Bethae <stories@bethae.com>"
 //
-// Until those are set, this function safely no-ops: it logs why it
+// Until Supabase vars are set, this function safely no-ops: it logs why it
 // couldn't write, but still returns 200 so Tally doesn't retry forever.
 // No signups are lost in the meantime -- Tally keeps every submission
 // in its own Submissions tab and still emails a notification per entry.
+//
+// Multi-kid submissions (added 7/24): the form supports up to MAX_CHILDREN
+// kids in one submission. Child 1's fields keep their original labels
+// (e.g. "First name -- as they like to hear it") for backward compatibility.
+// Each additional child's fields must have " (Child 2)", " (Child 3)", etc.
+// appended to the same question text in Tally -- see getChildField below.
+// A child slot with no name answered is treated as "not used" and skipped
+// (except child 1, which always produces a row, defaulting to "Unknown"
+// if somehow left blank, to match the original single-child behavior).
+
+const MAX_CHILDREN = 4;
+
+// A matcher is either a plain substring (current behavior) or a RegExp --
+// use RegExp for short/generic words (like "age") that could otherwise
+// false-match inside unrelated labels (e.g. "age" inside "encourage").
+function labelMatches(label, m) {
+  if (m instanceof RegExp) return m.test(label);
+  return label.includes(m);
+}
 
 function getField(fields, matchers) {
   for (const m of matchers) {
     const f = fields.find(
-      (fd) => fd.label && fd.label.toLowerCase().includes(m)
+      (fd) => fd.label && labelMatches(fd.label.toLowerCase(), m)
     );
+    if (f) return f;
+  }
+  return null;
+}
+
+// Same idea as getField, but scoped to one child's block of questions.
+// Child 1 matches the plain (unsuffixed) label; child 2+ matches only
+// labels carrying that child's "(Child N)" marker.
+function getChildField(fields, matchers, childIndex) {
+  const marker = childIndex > 1 ? `child ${childIndex}` : null;
+  for (const m of matchers) {
+    const f = fields.find((fd) => {
+      if (!fd.label) return false;
+      const label = fd.label.toLowerCase();
+      if (!labelMatches(label, m)) return false;
+      const hasChildMarker = /\(child\s*\d+\)/.test(label);
+      return marker ? label.includes(marker) : !hasChildMarker;
+    });
     if (f) return f;
   }
   return null;
@@ -120,11 +161,27 @@ function timezoneLabel(tz) {
   return map[tz] || '';
 }
 
+// "Emma" / "Emma and Jack" / "Emma, Jack, and Sam"
+function joinNames(names) {
+  const clean = (names || []).filter(Boolean);
+  if (clean.length === 0) return null;
+  if (clean.length === 1) return clean[0];
+  if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
+  return `${clean.slice(0, -1).join(', ')}, and ${clean[clean.length - 1]}`;
+}
+
 // Bethae-branded welcome/thank-you email, sent right after a Tally
 // submission is synced to Supabase. Reuses the site's Cranberry/Amber
-// palette and "Little moments. Lasting connection." motto.
-function buildWelcomeEmailHtml({ childName, deliveryTime, timezone }) {
-  const name = escapeHtml(childName) || 'your child';
+// palette and "Little moments. Lasting connection." motto. One combined
+// email per family submission, naming every kid on this signup.
+function buildWelcomeEmailHtml({ childNames, deliveryTime, timezone }) {
+  const names = (childNames || []).filter(Boolean);
+  const isMultiple = names.length > 1;
+  const nameList = escapeHtml(joinNames(names) || 'your child');
+  const possessive = isMultiple ? 'their' : `${nameList}'s`;
+  const pronounVerb = isMultiple ? "they'll" : "it'll";
+  const pronounLoves = isMultiple ? 'they love' : `${nameList} loves`;
+  const storyWord = isMultiple ? 'stories' : 'story';
   const timeLabel = escapeHtml(deliveryTime);
   const tzLabel = timezone ? ` ${escapeHtml(timezone)}` : '';
   return `
@@ -137,10 +194,10 @@ function buildWelcomeEmailHtml({ childName, deliveryTime, timezone }) {
     <div style="padding:32px;">
       <h1 style="font-size:20px;margin:0 0 16px;color:#2B2230;">Welcome to Bethae!</h1>
       <p style="font-size:15px;line-height:1.6;color:#5C5260;margin:0 0 16px;">
-        Thank you for signing up to test Bethae with ${name}. We're so glad you're here.
+        Thank you for signing up to test Bethae with ${nameList}. We're so glad you're here.
       </p>
       <p style="font-size:15px;line-height:1.6;color:#5C5260;margin:0 0 16px;">
-        Here's what happens next: we're writing ${name}'s first personalized story now, and it'll land right in this inbox before bedtime &mdash; around ${timeLabel}${tzLabel}. Each story is built around the things ${name} loves, so keep an eye out for some familiar favorites.
+        Here's what happens next: we're writing ${possessive} first personalized ${storyWord} now, and ${pronounVerb} land right in this inbox before bedtime &mdash; around ${timeLabel}${tzLabel}. Each story is built around the things ${pronounLoves}, so keep an eye out for some familiar favorites.
       </p>
       <p style="font-size:15px;line-height:1.6;color:#5C5260;margin:0 0 16px;">
         We're still early in testing this, so if a story ever misses the mark, just reply to this email &mdash; we read every note.
@@ -158,19 +215,25 @@ function buildWelcomeEmailHtml({ childName, deliveryTime, timezone }) {
 // Fire-and-log: a Resend failure here should never block the Supabase sync
 // or cause Tally to retry. Returns the Resend message id, or null if the
 // email wasn't sent (env vars missing, or Resend returned an error).
-async function sendWelcomeEmail(toEmail, childName, deliveryTime, timezone) {
+// childNames: array of one or more kid first names from this submission.
+async function sendWelcomeEmail(toEmail, childNames, deliveryTime, timezone) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const FROM_EMAIL = process.env.FROM_EMAIL || 'Bethae <stories@bethae.com>';
   if (!RESEND_API_KEY) {
     console.error('RESEND_API_KEY not set in Vercel env vars -- welcome email NOT sent.', { toEmail });
     return null;
   }
+  const names = (childNames || []).filter(Boolean);
+  const isMultiple = names.length > 1;
+  const nameList = joinNames(names);
   const html = buildWelcomeEmailHtml({
-    childName,
+    childNames: names,
     deliveryTime: formatDeliveryTime(deliveryTime),
     timezone: timezoneLabel(timezone),
   });
-  const subject = `Welcome to Bethae — ${childName ? childName + "'s" : "your child's"} first story is on its way`;
+  const subjectPossessive = nameList ? `${nameList}'s` : "your child's";
+  const subjectTail = isMultiple ? 'first stories are on their way' : 'first story is on its way';
+  const subject = `Welcome to Bethae — ${subjectPossessive} ${subjectTail}`;
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -212,7 +275,9 @@ async function upsertFamily(supabaseUrl, serviceKey, familyData) {
   return rows[0];
 }
 
-async function insertChild(supabaseUrl, serviceKey, childData) {
+// Inserts one or more children in a single request (one row per kid on
+// this submission, all sharing the same family_id already merged in).
+async function insertChildren(supabaseUrl, serviceKey, childDataArray) {
   const res = await fetch(`${supabaseUrl}/rest/v1/children`, {
     method: 'POST',
     headers: {
@@ -221,14 +286,13 @@ async function insertChild(supabaseUrl, serviceKey, childData) {
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
     },
-    body: JSON.stringify([childData]),
+    body: JSON.stringify(childDataArray),
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Supabase child insert failed: ${res.status} ${text}`);
+    throw new Error(`Supabase children insert failed: ${res.status} ${text}`);
   }
-  const rows = await res.json();
-  return rows[0];
+  return await res.json();
 }
 
 module.exports = async (req, res) => {
@@ -252,14 +316,12 @@ module.exports = async (req, res) => {
     const timeField = getField(fields, ['what time', 'story arrive']);
     const styleField = getField(fields, ['story style']);
     const siblingField = getField(fields, ['one story starring', 'separate story']);
-    const childNameField = getField(fields, ['first name']);
-    const ageField = getField(fields, ['age']);
-    const genderField = getField(fields, ['gender']);
-    const interestsField = getField(fields, ['favorite things']);
-    const avoidField = getField(fields, ['keep out']);
-    const peopleField = getField(fields, ['people or pets']);
-    const valuesField = getField(fields, ['values you']);
     const lengthField = getField(fields, ['read-aloud length', 'read aloud length']);
+    // "Values you'd love..." is one shared family-level question (like story
+    // style and read-aloud length), not duplicated per child in the form --
+    // applied to every kid on this submission.
+    const valuesField = getField(fields, ['values you']);
+    const sharedValuesFocus = splitList(fieldValueText(valuesField));
 
     const email = fieldValueText(emailField);
     if (!email) {
@@ -274,24 +336,39 @@ module.exports = async (req, res) => {
       sibling_mode: mapSiblingMode(fieldValueText(siblingField)),
     };
 
-    const ageRaw = fieldValueText(ageField);
-    const ageParsed = ageRaw ? parseInt(ageRaw, 10) : NaN;
+    // Walk child slots 1..MAX_CHILDREN. Child 1 always produces a row
+    // (defaulting to "Unknown" if the name is somehow missing, matching
+    // the original single-child behavior). Slots 2+ are only included if
+    // that slot's name field was actually answered -- an empty slot means
+    // this family didn't use it, not an error.
+    const children = [];
+    for (let i = 1; i <= MAX_CHILDREN; i++) {
+      const name = fieldValueText(getChildField(fields, ['first name'], i));
+      if (!name && i > 1) continue;
+      if (!name && i === 1) {
+        console.error('Tally webhook: no child name found on submission (child 1)', { email, submissionId });
+      }
 
-    const childData = {
-      name: fieldValueText(childNameField) || 'Unknown',
-      age: Number.isFinite(ageParsed) ? ageParsed : 6,
-      gender: fieldValueText(genderField) ? fieldValueText(genderField).toLowerCase() : null,
-      interests: splitList(fieldValueText(interestsField)),
-      avoid_list: splitList(fieldValueText(avoidField)),
-      include_people: splitList(fieldValueText(peopleField)),
-      values_focus: splitList(fieldValueText(valuesField)),
-      bible_option: false,
-      mode: mapMode(fieldValueText(styleField)),
-      length_minutes: mapLength(fieldValueText(lengthField)),
-    };
+      const ageRaw = fieldValueText(getChildField(fields, [/\bage\b/i], i));
+      const ageParsed = ageRaw ? parseInt(ageRaw, 10) : NaN;
+      if (!Number.isFinite(ageParsed)) {
+        console.error(`Tally webhook: age missing/unparseable for child ${i}, defaulted to 6. Check this submission manually.`, { email, submissionId, ageRaw });
+      }
 
-    if (!Number.isFinite(ageParsed)) {
-      console.error('Tally webhook: age missing/unparseable, defaulted to 6. Check this submission manually.', { email, submissionId, ageRaw });
+      const genderVal = fieldValueText(getChildField(fields, ['gender'], i));
+
+      children.push({
+        name: name || 'Unknown',
+        age: Number.isFinite(ageParsed) ? ageParsed : 6,
+        gender: genderVal ? genderVal.toLowerCase() : null,
+        interests: splitList(fieldValueText(getChildField(fields, ['favorite things'], i))),
+        avoid_list: splitList(fieldValueText(getChildField(fields, ['keep out'], i))),
+        include_people: splitList(fieldValueText(getChildField(fields, ['people or pets'], i))),
+        values_focus: sharedValuesFocus,
+        bible_option: false,
+        mode: mapMode(fieldValueText(styleField)),
+        length_minutes: mapLength(fieldValueText(lengthField)),
+      });
     }
 
     const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -306,21 +383,23 @@ module.exports = async (req, res) => {
     }
 
     const family = await upsertFamily(SUPABASE_URL, SUPABASE_SERVICE_KEY, familyData);
-    const child = await insertChild(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-      ...childData,
-      family_id: family.id,
-    });
+    const insertedChildren = await insertChildren(
+      SUPABASE_URL,
+      SUPABASE_SERVICE_KEY,
+      children.map((c) => ({ ...c, family_id: family.id }))
+    );
 
     console.log('Tally submission synced to Supabase', {
       submissionId,
       family_id: family.id,
-      child_id: child.id,
+      child_ids: insertedChildren.map((c) => c.id),
+      child_count: insertedChildren.length,
       email,
     });
 
     const welcomeEmailId = await sendWelcomeEmail(
       email,
-      childData.name,
+      children.map((c) => c.name),
       familyData.delivery_time,
       familyData.timezone
     );
@@ -331,7 +410,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       ok: true,
       family_id: family.id,
-      child_id: child.id,
+      child_ids: insertedChildren.map((c) => c.id),
       welcome_email_id: welcomeEmailId,
     });
   } catch (err) {
