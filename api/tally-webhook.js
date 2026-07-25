@@ -3,13 +3,22 @@
 //
 // Requires these environment variables to be set in the Vercel project
 // (Project Settings -> Environment Variables), then redeploy:
-//   SUPABASE_URL           e.g. https://xxxxx.supabase.co
-//   SUPABASE_SERVICE_KEY   the "service_role" key from Supabase
-//                          (Project Settings -> API in Supabase)
-//   RESEND_API_KEY         for the welcome email (optional -- logs and
-//                          skips the email if missing, everything else
-//                          still works)
+//   SUPABASE_URL          e.g. https://xxxxx.supabase.co
+//   SUPABASE_SERVICE_KEY  the "service_role" key from Supabase
+//                         (Project Settings -> API in Supabase)
+//   RESEND_API_KEY        for the welcome email (optional -- logs and
+//                         skips the email if missing, everything else
+//                         still works)
 //   FROM_EMAIL             optional, defaults to "Bethae <stories@bethae.com>"
+//   GH_DISPATCH_TOKEN      (added 2026-07-24) a GitHub PAT with Actions:write
+//                         on kjmbuildco-cloud/bedtime-stories, used to fire
+//                         the fully-automated first-story workflow the
+//                         instant onboarding completes. Optional -- if unset,
+//                         the family/children are still saved normally and
+//                         this step just logs and no-ops (first story would
+//                         then need the existing manual `generate --now`
+//                         stopgap instead).
+//   GH_REPO                optional, defaults to "kjmbuildco-cloud/bedtime-stories"
 //
 // Until Supabase vars are set, this function safely no-ops: it logs why it
 // couldn't write, but still returns 200 so Tally doesn't retry forever.
@@ -24,6 +33,15 @@
 // A child slot with no name answered is treated as "not used" and skipped
 // (except child 1, which always produces a row, defaulting to "Unknown"
 // if somehow left blank, to match the original single-child behavior).
+//
+// Onboarding-complete signal (added 7/24, handoff Goal 1): today this whole
+// handler runs as ONE atomic request -- family + all children are written
+// together, so there's no window where a family exists without its
+// children on this path. We still record families.onboarding_completed_at
+// explicitly (rather than inferring it from "children exist"), because a
+// future Stripe-driven signup flow may create the family record separately
+// from a later "add your kids" step, and this timestamp is what makes the
+// automated first-story trigger correct and idempotent either way.
 
 const MAX_CHILDREN = 4;
 
@@ -295,6 +313,78 @@ async function insertChildren(supabaseUrl, serviceKey, childDataArray) {
   return await res.json();
 }
 
+// Idempotently marks onboarding complete: only writes onboarding_completed_at
+// if it is currently null. Returns true ONLY if THIS call is the one that
+// actually set it (i.e. it was previously unset) -- that return value is
+// what gates whether we fire the one-time automated first-story dispatch
+// below, so a retried webhook call or duplicate Tally submission for the
+// same family can never trigger it twice.
+async function markOnboardingComplete(supabaseUrl, serviceKey, familyId) {
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/families?id=eq.${familyId}&onboarding_completed_at=is.null`,
+    {
+      method: 'PATCH',
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify({ onboarding_completed_at: new Date().toISOString() }),
+    }
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    console.error('markOnboardingComplete failed (non-fatal):', res.status, text);
+    return false;
+  }
+  const rows = await res.json();
+  return rows.length > 0;
+}
+
+// Fire-and-log: dispatches the `onboard` GitHub Actions workflow, which runs
+// `generate_and_send.py onboard --family <email>` (generate immediately,
+// send immediately if it clears the gate, no local-time-of-day wait). A
+// dispatch failure here never blocks the webhook's response to Tally --
+// worst case, the family still gets their first story via the existing
+// manual `generate --now --family` stopgap.
+async function triggerOnboardingGeneration(email) {
+  const token = process.env.GH_DISPATCH_TOKEN;
+  const repo = process.env.GH_REPO || 'kjmbuildco-cloud/bedtime-stories';
+  if (!token) {
+    console.error(
+      'GH_DISPATCH_TOKEN not set -- skipping automatic first-story dispatch for',
+      email,
+      `. Fix: add a GitHub PAT (Actions:write on ${repo}) as GH_DISPATCH_TOKEN in ` +
+        'Vercel env vars. Until then, first stories still need the manual ' +
+        '"generate --now --family" workflow_dispatch stopgap.'
+    );
+    return;
+  }
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${repo}/actions/workflows/onboard.yml/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ref: 'main', inputs: { family: email } }),
+      }
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      console.error('Onboarding workflow dispatch failed (non-fatal):', res.status, text);
+      return;
+    }
+    console.log('Dispatched onboard.yml workflow for', email);
+  } catch (err) {
+    console.error('Onboarding workflow dispatch error (non-fatal):', err);
+  }
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.status(200).json({ ok: true, note: 'Bethae Tally webhook endpoint. Expects POST from Tally.' });
@@ -397,6 +487,23 @@ module.exports = async (req, res) => {
       email,
     });
 
+    // Onboarding is complete once family + at least one child both exist --
+    // true right here, atomically, on this form's single-submission path.
+    // markOnboardingComplete only returns true the first time this fires
+    // for a given family, so the dispatch below is safe even if Tally (or
+    // a client retry) calls this webhook more than once for the same email.
+    let onboardingJustCompleted = false;
+    if (insertedChildren.length > 0) {
+      onboardingJustCompleted = await markOnboardingComplete(
+        SUPABASE_URL,
+        SUPABASE_SERVICE_KEY,
+        family.id
+      );
+    }
+    if (onboardingJustCompleted) {
+      await triggerOnboardingGeneration(email);
+    }
+
     const welcomeEmailId = await sendWelcomeEmail(
       email,
       children.map((c) => c.name),
@@ -411,6 +518,7 @@ module.exports = async (req, res) => {
       ok: true,
       family_id: family.id,
       child_ids: insertedChildren.map((c) => c.id),
+      onboarding_just_completed: onboardingJustCompleted,
       welcome_email_id: welcomeEmailId,
     });
   } catch (err) {
