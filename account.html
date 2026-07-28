@@ -1,0 +1,156 @@
+<!doctype html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My account -- Bethae</title>
+  <style>
+  :root { --cranberry:#E0567A; --cranberry-dark:#C43D60; --amber:#F5A94E; --cream:#FFF8F2; --ink:#2B2230; --ink-soft:#5C5260; }
+  * { box-sizing: border-box; }
+body { margin:0; min-height:100vh; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:var(--cream); color:var(--ink); }
+nav { display:flex; align-items:center; justify-content:space-between; padding:20px 6vw; border-bottom:1px solid rgba(43,34,48,0.08); }
+.logo { font-size:1.3rem; font-weight:700; color:var(--cranberry-dark); display:flex; align-items:center; gap:10px; text-decoration:none; }
+.logout { background:none; border:1px solid rgba(43,34,48,0.18); color:var(--ink-soft); padding:8px 16px; border-radius:999px; font-size:0.85rem; cursor:pointer; }
+main { max-width:640px; margin:0 auto; padding:48px 6vw; }
+h1 { font-size:1.6rem; margin:0 0 6px; }
+p.sub { color:var(--ink-soft); margin:0 0 32px; }
+.card { background:white; border-radius:14px; padding:24px; box-shadow:0 4px 16px rgba(43,34,48,0.06); margin-bottom:20px; }
+.card h3 { margin:0 0 6px; font-size:1rem; color:var(--cranberry-dark); }
+.card p { margin:0; color:var(--ink-soft); font-size:0.92rem; }
+.badge { display:inline-block; background:var(--amber); color:white; font-size:0.7rem; font-weight:700; padding:3px 10px; border-radius:999px; margin-bottom:2px; }
+.loading, .err { text-align:center; padding:80px 20px; color:var(--ink-soft); }
+.err a { color:var(--cranberry-dark); }
+.hidden { display:none; }
+</style>
+  </head>
+  <body>
+
+  <div id="loading" class="loading">Loading your account...</div>
+
+  <div id="err" class="err hidden">
+    <p id="err-text">You need to log in to view this page.</p>
+    <p><a href="/login.html">Go to login</a></p>
+</div>
+
+<div id="app" class="hidden">
+  <nav>
+    <a class="logo" href="/index.html"><svg width="24" height="24" viewBox="0 0 220 220"><circle cx="110" cy="110" r="100" fill="#E0567A"/><path d="M75 60 C75 50 83 42 95 42 L107 42 C127 42 141 56 141 74 C141 88 133 98 121 102 C135 106 145 118 145 134 C145 154 129 170 107 170 L95 170 C83 170 75 162 75 150 Z" fill="none" stroke="#FFF8F2" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M75 60 L75 150" stroke="#FFF8F2" stroke-width="10" stroke-linecap="round"/></svg>Bethae</a>
+      <button class="logout" id="logout-btn">Log out</button>
+    </nav>
+    <main>
+      <h1>Welcome back</h1>
+      <p class="sub" id="account-email"></p>
+
+      <div class="card">
+        <span class="badge">Coming soon</span>
+        <h3>Edit your child's story profile</h3>
+        <p>Update interests, things to avoid, and other details yourself -- this is being built next.</p>
+      </div>
+      <div class="card">
+      <span class="badge">Coming soon</span>
+        <h3>Request tonight's reroll</h3>
+        <p>Ask for a different story if tonight's didn't land, without waiting on us.</p>
+      </div>
+      <div class="card">
+        <span class="badge">Coming soon</span>
+        <h3>Manage your subscription</h3>
+      <p>Pause, cancel, or update billing details right from here.</p>
+    </div>
+  </main>
+  </div>
+  <script>
+const SUPABASE_URL = 'https://cuqhyabaorkjxtvovkio.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Qi9i7NTOrFoHO4IcOp1Fog_V-MbKesU';
+
+  const loadingEl = document.getElementById('loading');
+const errEl = document.getElementById('err');
+const errText = document.getElementById('err-text');
+const appEl = document.getElementById('app');
+
+function showError(msg) {
+  loadingEl.classList.add('hidden');
+  appEl.classList.add('hidden');
+    errEl.classList.remove('hidden');
+    if (msg) errText.textContent = msg;
+  }
+
+  function showApp(email) {
+  loadingEl.classList.add('hidden');
+  errEl.classList.add('hidden');
+  appEl.classList.remove('hidden');
+  document.getElementById('account-email').textContent = email;
+  }
+
+  function getSession() {
+    try {
+      return JSON.parse(localStorage.getItem('bethae_session') || 'null');
+    } catch (e) {
+    return null;
+    }
+  }
+
+async function refreshSession(session) {
+  const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+    method: 'POST',
+    headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: session.refresh_token }),
+});
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null);
+  if (!data || !data.access_token) return null;
+  const updated = {
+        access_token: data.access_token,
+              refresh_token: data.refresh_token || session.refresh_token,
+              expires_at: data.expires_at || (Math.floor(Date.now() / 1000) + (data.expires_in || 3600)),
+              email: session.email,
+          };
+  localStorage.setItem('bethae_session', JSON.stringify(updated));
+  return updated;
+}
+
+(async () => {
+    let session = getSession();
+  if (!session || !session.access_token) {
+    showError('You need to log in to view this page.');
+    return;
+  }
+
+  // Refresh if the access token is expired or close to expiring (within 60s).
+  const now = Math.floor(Date.now() / 1000);
+  if (!session.expires_at || session.expires_at - now < 60) {
+    session = await refreshSession(session);
+    if (!session) {
+      localStorage.removeItem('bethae_session');
+      showError('Your session expired -- please log in again.');
+      return;
+    }
+  }
+
+  // Re-confirm the claim (idempotent, cheap) rather than assuming the
+  // session is still valid server-side.
+  try {
+    const claimRes = await fetch('/api/auth/claim-family', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + session.access_token },
+  });
+    const claimData = await claimRes.json().catch(() => ({}));
+    if (!claimRes.ok || !claimData.ok) {
+      localStorage.removeItem('bethae_session');
+      showError('We could not verify your account -- please log in again.');
+      return;
+    }
+    showApp(claimData.email || session.email);
+  } catch (err) {
+    showError('Network error -- please refresh the page.');
+  }
+})();
+
+document.getElementById('logout-btn')?.addEventListener('click', () => {
+    localStorage.removeItem('bethae_session');
+  window.location.href = '/login.html';
+});
+</script>
+
+  </body>
+  </html>
+  
