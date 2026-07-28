@@ -1,68 +1,135 @@
 <!doctype html>
-  <html lang="en">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My account -- Bethae</title>
-  <style>
-  :root { --cranberry:#E0567A; --cranberry-dark:#C43D60; --amber:#F5A94E; --cream:#FFF8F2; --ink:#2B2230; --ink-soft:#5C5260; }
-  * { box-sizing: border-box; }
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My account -- Bethae</title>
+<style>
+:root { --cranberry:#E0567A; --cranberry-dark:#C43D60; --amber:#F5A94E; --cream:#FFF8F2; --ink:#2B2230; --ink-soft:#5C5260; }
+* { box-sizing: border-box; }
 body { margin:0; min-height:100vh; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:var(--cream); color:var(--ink); }
 nav { display:flex; align-items:center; justify-content:space-between; padding:20px 6vw; border-bottom:1px solid rgba(43,34,48,0.08); }
 .logo { font-size:1.3rem; font-weight:700; color:var(--cranberry-dark); display:flex; align-items:center; gap:10px; text-decoration:none; }
 .logout { background:none; border:1px solid rgba(43,34,48,0.18); color:var(--ink-soft); padding:8px 16px; border-radius:999px; font-size:0.85rem; cursor:pointer; }
-main { max-width:640px; margin:0 auto; padding:48px 6vw; }
+main { max-width:640px; margin:0 auto; padding:48px 6vw 80px; }
 h1 { font-size:1.6rem; margin:0 0 6px; }
 p.sub { color:var(--ink-soft); margin:0 0 32px; }
 .card { background:white; border-radius:14px; padding:24px; box-shadow:0 4px 16px rgba(43,34,48,0.06); margin-bottom:20px; }
 .card h3 { margin:0 0 6px; font-size:1rem; color:var(--cranberry-dark); }
-.card p { margin:0; color:var(--ink-soft); font-size:0.92rem; }
-.badge { display:inline-block; background:var(--amber); color:white; font-size:0.7rem; font-weight:700; padding:3px 10px; border-radius:999px; margin-bottom:2px; }
+.card > p.desc { margin:0 0 16px; color:var(--ink-soft); font-size:0.92rem; }
+.badge { display:inline-block; background:var(--amber); color:white; font-size:0.7rem; font-weight:700; padding:3px 10px; border-radius:999px; margin-bottom:8px; }
 .loading, .err { text-align:center; padding:80px 20px; color:var(--ink-soft); }
 .err a { color:var(--cranberry-dark); }
 .hidden { display:none; }
+.child-row { border-top:1px solid rgba(43,34,48,0.08); padding:16px 0; }
+.child-row:first-of-type { border-top:none; padding-top:0; }
+.child-head { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.child-head strong { font-size:0.98rem; }
+.child-head span.meta { color:var(--ink-soft); font-size:0.85rem; margin-left:6px; }
+.child-head button.link-btn { background:none; border:none; color:var(--cranberry-dark); font-weight:600; font-size:0.85rem; cursor:pointer; padding:0; }
+.child-form { margin-top:14px; display:none; }
+.child-form.open { display:block; }
+label { display:block; font-size:0.8rem; font-weight:600; color:var(--ink-soft); margin:12px 0 4px; }
+label:first-child { margin-top:0; }
+input[type=text], input[type=number], select, textarea {
+  width:100%; padding:9px 11px; border:1px solid rgba(43,34,48,0.18); border-radius:8px;
+  font-size:0.92rem; font-family:inherit; background:var(--cream); color:var(--ink);
+}
+textarea { min-height:52px; resize:vertical; }
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.btn { background:var(--cranberry); color:white; border:none; padding:10px 18px; border-radius:999px; font-size:0.88rem; font-weight:600; cursor:pointer; margin-top:14px; }
+.btn:disabled { opacity:0.55; cursor:default; }
+.btn.secondary { background:none; border:1px solid var(--cranberry); color:var(--cranberry-dark); }
+.msg { font-size:0.85rem; margin-top:10px; }
+.msg.success { color:#2E7D32; }
+.msg.error { color:var(--cranberry-dark); }
+.reroll-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px solid rgba(43,34,48,0.08); }
+.reroll-row:first-of-type { border-top:none; }
+.toggle-row { display:flex; align-items:center; gap:10px; margin-top:14px; }
+.toggle-row input { width:auto; }
+.archive-item { border-top:1px solid rgba(43,34,48,0.08); padding:12px 0; }
+.archive-item:first-of-type { border-top:none; }
+.archive-item summary { cursor:pointer; font-weight:600; font-size:0.92rem; }
+.archive-item .archive-meta { color:var(--ink-soft); font-size:0.8rem; margin:2px 0 8px; }
+.archive-item .archive-body { font-size:0.9rem; line-height:1.6; white-space:pre-wrap; color:var(--ink); }
 </style>
-  </head>
-  <body>
+</head>
+<body>
 
-  <div id="loading" class="loading">Loading your account...</div>
+<div id="loading" class="loading">Loading your account...</div>
 
-  <div id="err" class="err hidden">
-    <p id="err-text">You need to log in to view this page.</p>
-    <p><a href="/login.html">Go to login</a></p>
+<div id="err" class="err hidden">
+  <p id="err-text">You need to log in to view this page.</p>
+  <p><a href="/login.html">Go to login</a></p>
 </div>
 
 <div id="app" class="hidden">
   <nav>
     <a class="logo" href="/index.html"><svg width="24" height="24" viewBox="0 0 220 220"><circle cx="110" cy="110" r="100" fill="#E0567A"/><path d="M75 60 C75 50 83 42 95 42 L107 42 C127 42 141 56 141 74 C141 88 133 98 121 102 C135 106 145 118 145 134 C145 154 129 170 107 170 L95 170 C83 170 75 162 75 150 Z" fill="none" stroke="#FFF8F2" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M75 60 L75 150" stroke="#FFF8F2" stroke-width="10" stroke-linecap="round"/></svg>Bethae</a>
-      <button class="logout" id="logout-btn">Log out</button>
-    </nav>
-    <main>
-      <h1>Welcome back</h1>
-      <p class="sub" id="account-email"></p>
+    <button class="logout" id="logout-btn">Log out</button>
+  </nav>
+  <main>
+    <h1>Welcome back</h1>
+    <p class="sub" id="account-email"></p>
 
-      <div class="card">
-        <span class="badge">Coming soon</span>
-        <h3>Edit your child's story profile</h3>
-        <p>Update interests, things to avoid, and other details yourself -- this is being built next.</p>
+    <div class="card">
+      <h3>Your children's story profiles</h3>
+      <p class="desc">Update interests, things to avoid, and other details -- changes apply starting with the next story.</p>
+      <div id="children-list"></div>
+    </div>
+
+    <div class="card">
+      <h3>Request tonight's reroll</h3>
+      <p class="desc">Not quite right? Ask for a different story for tonight. Limited to 2 per week per family.</p>
+      <div id="reroll-list"></div>
+    </div>
+
+    <div class="card">
+      <h3>Delivery settings</h3>
+      <p class="desc">Choose when stories arrive, and pause anytime without canceling.</p>
+      <label for="delivery-time">Delivery time</label>
+      <div class="row2">
+        <select id="delivery-time">
+          <option value="17:00:00">5:00 PM</option>
+          <option value="18:00:00">6:00 PM</option>
+          <option value="19:00:00">7:00 PM</option>
+          <option value="20:00:00">8:00 PM</option>
+        </select>
+        <select id="timezone">
+          <option value="America/New_York">Eastern</option>
+          <option value="America/Chicago">Central</option>
+          <option value="America/Denver">Mountain</option>
+          <option value="America/Los_Angeles">Pacific</option>
+        </select>
       </div>
-      <div class="card">
+      <div class="toggle-row">
+        <input type="checkbox" id="pause-toggle">
+        <label for="pause-toggle" style="margin:0;font-weight:500;color:var(--ink);">Pause my stories (no billing impact -- resume anytime)</label>
+      </div>
+      <button class="btn" id="save-delivery-btn">Save delivery settings</button>
+      <p class="msg hidden" id="delivery-msg"></p>
+    </div>
+
+    <div class="card">
+      <h3>Story archive</h3>
+      <p class="desc">Read past stories again anytime.</p>
+      <button class="btn secondary" id="load-archive-btn">Show past stories</button>
+      <div id="archive-list" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card">
       <span class="badge">Coming soon</span>
-        <h3>Request tonight's reroll</h3>
-        <p>Ask for a different story if tonight's didn't land, without waiting on us.</p>
-      </div>
-      <div class="card">
-        <span class="badge">Coming soon</span>
-        <h3>Manage your subscription</h3>
-      <p>Pause, cancel, or update billing details right from here.</p>
+      <h3>Manage your subscription</h3>
+      <p class="desc" style="margin:0;">Billing, cancellation, and updating your account email will live here once Stripe is connected.</p>
     </div>
   </main>
-  </div>
-  <script>
+</div>
+
+<script>
 const SUPABASE_URL = 'https://cuqhyabaorkjxtvovkio.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Qi9i7NTOrFoHO4IcOp1Fog_V-MbKesU';
 
-  const loadingEl = document.getElementById('loading');
+const loadingEl = document.getElementById('loading');
 const errEl = document.getElementById('err');
 const errText = document.getElementById('err-text');
 const appEl = document.getElementById('app');
@@ -70,52 +137,243 @@ const appEl = document.getElementById('app');
 function showError(msg) {
   loadingEl.classList.add('hidden');
   appEl.classList.add('hidden');
-    errEl.classList.remove('hidden');
-    if (msg) errText.textContent = msg;
-  }
+  errEl.classList.remove('hidden');
+  if (msg) errText.textContent = msg;
+}
 
-  function showApp(email) {
+function showApp(email) {
   loadingEl.classList.add('hidden');
   errEl.classList.add('hidden');
   appEl.classList.remove('hidden');
   document.getElementById('account-email').textContent = email;
-  }
+}
 
-  function getSession() {
-    try {
-      return JSON.parse(localStorage.getItem('bethae_session') || 'null');
-    } catch (e) {
+function getSession() {
+  try {
+    return JSON.parse(localStorage.getItem('bethae_session') || 'null');
+  } catch (e) {
     return null;
-    }
   }
+}
 
 async function refreshSession(session) {
   const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
     method: 'POST',
     headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh_token: session.refresh_token }),
-});
+  });
   if (!res.ok) return null;
   const data = await res.json().catch(() => null);
   if (!data || !data.access_token) return null;
   const updated = {
-        access_token: data.access_token,
-              refresh_token: data.refresh_token || session.refresh_token,
-              expires_at: data.expires_at || (Math.floor(Date.now() / 1000) + (data.expires_in || 3600)),
-              email: session.email,
-          };
+    access_token: data.access_token,
+    refresh_token: data.refresh_token || session.refresh_token,
+    expires_at: data.expires_at || (Math.floor(Date.now() / 1000) + (data.expires_in || 3600)),
+    email: session.email,
+  };
   localStorage.setItem('bethae_session', JSON.stringify(updated));
   return updated;
 }
 
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function authHeaders(session) {
+  return { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' };
+}
+
+function renderChildren(children) {
+  const listEl = document.getElementById('children-list');
+  if (!children.length) { listEl.textContent = 'No children on file yet.'; return; }
+  listEl.innerHTML = children.map((c, i) => `
+    <div class="child-row">
+      <div class="child-head" data-toggle="child-form-${i}">
+        <div><strong>${escapeHtml(c.name)}</strong><span class="meta">age ${escapeHtml(c.age)}</span></div>
+        <button type="button" class="link-btn">Edit</button>
+      </div>
+      <div class="child-form" id="child-form-${i}">
+        <label>Name</label>
+        <input type="text" data-field="name" data-child="${c.id}" value="${escapeHtml(c.name)}">
+        <div class="row2">
+          <div>
+            <label>Age</label>
+            <input type="number" min="0" max="17" data-field="age" data-child="${c.id}" value="${escapeHtml(c.age)}">
+          </div>
+          <div>
+            <label>Story length</label>
+            <select data-field="length_minutes" data-child="${c.id}">
+              <option value="3" ${c.length_minutes === 3 ? 'selected' : ''}>3 minutes</option>
+              <option value="5" ${c.length_minutes === 5 ? 'selected' : ''}>5 minutes</option>
+              <option value="8" ${c.length_minutes === 8 ? 'selected' : ''}>8 minutes</option>
+            </select>
+          </div>
+        </div>
+        <label>Favorite things (comma separated)</label>
+        <textarea data-field="interests" data-child="${c.id}">${escapeHtml((c.interests || []).join(', '))}</textarea>
+        <label>Things to avoid</label>
+        <textarea data-field="avoid_list" data-child="${c.id}">${escapeHtml((c.avoid_list || []).join(', '))}</textarea>
+        <label>People or pets to include</label>
+        <textarea data-field="include_people" data-child="${c.id}">${escapeHtml((c.include_people || []).join(', '))}</textarea>
+        <label>Values to focus on</label>
+        <textarea data-field="values_focus" data-child="${c.id}">${escapeHtml((c.values_focus || []).join(', '))}</textarea>
+        <button type="button" class="btn save-child-btn" data-child="${c.id}" data-idx="${i}">Save changes</button>
+        <p class="msg hidden" id="child-msg-${i}"></p>
+      </div>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('[data-toggle]').forEach((headEl) => {
+    headEl.addEventListener('click', () => {
+      const formEl = document.getElementById(headEl.getAttribute('data-toggle'));
+      formEl.classList.toggle('open');
+    });
+  });
+
+  listEl.querySelectorAll('.save-child-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const session = getSession();
+      const childId = btn.getAttribute('data-child');
+      const idx = btn.getAttribute('data-idx');
+      const msgEl = document.getElementById('child-msg-' + idx);
+      const fields = listEl.querySelectorAll(`[data-child="${childId}"][data-field]`);
+      const body = { child_id: childId };
+      fields.forEach((f) => {
+        const field = f.getAttribute('data-field');
+        body[field] = field === 'age' || field === 'length_minutes' ? Number(f.value) : f.value;
+      });
+      btn.disabled = true;
+      msgEl.className = 'msg hidden';
+      try {
+        const res = await fetch('/api/account/update-child', {
+          method: 'PATCH', headers: authHeaders(session), body: JSON.stringify(body),
+        });
+        const data = await res.json().catch(() => ({}));
+        msgEl.classList.remove('hidden');
+        if (res.ok && data.ok) {
+          msgEl.textContent = 'Saved.'; msgEl.classList.add('success');
+        } else {
+          msgEl.textContent = data.reason || 'Could not save changes.'; msgEl.classList.add('error');
+        }
+      } catch (e) {
+        msgEl.classList.remove('hidden'); msgEl.textContent = 'Network error.'; msgEl.classList.add('error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+function renderRerollRow(children) {
+  const rerollListEl = document.getElementById('reroll-list');
+  if (!children.length) { rerollListEl.textContent = 'No children on file yet.'; return; }
+  rerollListEl.innerHTML = children.map((c, i) => `
+    <div class="reroll-row">
+      <span>${escapeHtml(c.name)}</span>
+      <button type="button" class="btn secondary reroll-btn" data-child="${c.id}" data-idx="${i}">Reroll tonight's story</button>
+    </div>
+    <p class="msg hidden" id="reroll-msg-${i}"></p>
+  `).join('');
+
+  rerollListEl.querySelectorAll('.reroll-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const session = getSession();
+      const childId = btn.getAttribute('data-child');
+      const idx = btn.getAttribute('data-idx');
+      const msgEl = document.getElementById('reroll-msg-' + idx);
+      btn.disabled = true;
+      msgEl.className = 'msg hidden';
+      try {
+        const res = await fetch('/api/account/reroll', {
+          method: 'POST', headers: authHeaders(session), body: JSON.stringify({ child_id: childId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        msgEl.classList.remove('hidden');
+        if (res.ok && data.ok) {
+          msgEl.textContent = data.message || 'Requested.'; msgEl.classList.add('success');
+        } else {
+          msgEl.textContent = data.reason || 'Could not request a reroll.'; msgEl.classList.add('error');
+        }
+      } catch (e) {
+        msgEl.classList.remove('hidden'); msgEl.textContent = 'Network error.'; msgEl.classList.add('error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+function fillDeliveryForm(family) {
+  document.getElementById('delivery-time').value = family.delivery_time || '18:00:00';
+  document.getElementById('timezone').value = family.timezone || 'America/Chicago';
+  document.getElementById('pause-toggle').checked = family.status === 'paused';
+}
+
+function wireDeliverySave() {
+  document.getElementById('save-delivery-btn').addEventListener('click', async () => {
+    const session = getSession();
+    const btn = document.getElementById('save-delivery-btn');
+    const msgEl = document.getElementById('delivery-msg');
+    const body = {
+      delivery_time: document.getElementById('delivery-time').value,
+      timezone: document.getElementById('timezone').value,
+      paused: document.getElementById('pause-toggle').checked,
+    };
+    btn.disabled = true;
+    msgEl.className = 'msg hidden';
+    try {
+      const res = await fetch('/api/account/update-family', {
+        method: 'PATCH', headers: authHeaders(session), body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      msgEl.classList.remove('hidden');
+      if (res.ok && data.ok) {
+        msgEl.textContent = 'Saved.'; msgEl.classList.add('success');
+      } else {
+        msgEl.textContent = data.reason || 'Could not save.'; msgEl.classList.add('error');
+      }
+    } catch (e) {
+      msgEl.classList.remove('hidden'); msgEl.textContent = 'Network error.'; msgEl.classList.add('error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
+
+function wireArchive() {
+  document.getElementById('load-archive-btn').addEventListener('click', async () => {
+    const session = getSession();
+    const btn = document.getElementById('load-archive-btn');
+    const listEl = document.getElementById('archive-list');
+    btn.disabled = true;
+    listEl.textContent = 'Loading...';
+    try {
+      const res = await fetch('/api/account/stories', { headers: authHeaders(session) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) { listEl.textContent = 'Could not load past stories.'; return; }
+      if (!data.stories.length) { listEl.textContent = 'No past stories yet.'; return; }
+      listEl.innerHTML = data.stories.map((s) => `
+        <details class="archive-item">
+          <summary>${escapeHtml(s.title)} <span class="archive-meta" style="display:inline;">-- ${escapeHtml(s.deliver_on)}${s.children.length ? ' -- ' + escapeHtml(s.children.join(', ')) : ''}</span></summary>
+          <div class="archive-body">${escapeHtml(s.body)}</div>
+        </details>
+      `).join('');
+    } catch (e) {
+      listEl.textContent = 'Network error loading past stories.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
+
 (async () => {
-    let session = getSession();
+  let session = getSession();
   if (!session || !session.access_token) {
     showError('You need to log in to view this page.');
     return;
   }
 
-  // Refresh if the access token is expired or close to expiring (within 60s).
   const now = Math.floor(Date.now() / 1000);
   if (!session.expires_at || session.expires_at - now < 60) {
     session = await refreshSession(session);
@@ -126,13 +384,11 @@ async function refreshSession(session) {
     }
   }
 
-  // Re-confirm the claim (idempotent, cheap) rather than assuming the
-  // session is still valid server-side.
   try {
     const claimRes = await fetch('/api/auth/claim-family', {
-            method: 'POST',
-            headers: { Authorization: 'Bearer ' + session.access_token },
-  });
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token },
+    });
     const claimData = await claimRes.json().catch(() => ({}));
     if (!claimRes.ok || !claimData.ok) {
       localStorage.removeItem('bethae_session');
@@ -140,17 +396,29 @@ async function refreshSession(session) {
       return;
     }
     showApp(claimData.email || session.email);
+
+    const childRes = await fetch('/api/account/children', { headers: authHeaders(session) });
+    const childData = await childRes.json().catch(() => ({}));
+    if (childRes.ok && childData.ok) {
+      renderChildren(childData.children);
+      renderRerollRow(childData.children);
+      fillDeliveryForm(childData.family);
+    } else {
+      document.getElementById('children-list').textContent = 'Could not load your children right now.';
+      document.getElementById('reroll-list').textContent = 'Could not load.';
+    }
+    wireDeliverySave();
+    wireArchive();
   } catch (err) {
     showError('Network error -- please refresh the page.');
   }
 })();
 
 document.getElementById('logout-btn')?.addEventListener('click', () => {
-    localStorage.removeItem('bethae_session');
+  localStorage.removeItem('bethae_session');
   window.location.href = '/login.html';
 });
 </script>
 
-  </body>
-  </html>
-  
+</body>
+</html>
