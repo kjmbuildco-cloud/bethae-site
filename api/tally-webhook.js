@@ -45,7 +45,49 @@
 
 const MAX_CHILDREN = 4;
 
+// Content screening + per-family child cap (added 2026-07-27, launch-
+// readiness items #8/#10, ahead of opening signups to the public):
+//   - Free-text child-profile fields (name, interests, avoid-list,
+//     include-people, values) are scanned against a short profanity/abuse
+//     wordlist before a submission is treated as clean. A flagged
+//     submission still SAVES the family/children (never silently drops
+//     real data) but skips the automatic first-story dispatch and welcome
+//     email, sending Kyle a review alert instead -- same "fail open to
+//     human review, never fail open to silent auto-send" philosophy as
+//     the existing output-side safety gate in quality_gate.py. Both
+//     pieces of new logic are wrapped in try/catch and default to "not
+//     flagged" / "no cap hit" on any internal error, so a bug in this
+//     addition degrades gracefully instead of breaking the only signup
+//     path in the product.
+//   - Total children per family are capped at MAX_CHILDREN by counting
+//     existing rows before inserting more, so repeatedly resubmitting the
+//     same email can't pile up unlimited child rows or unlimited welcome
+//     emails.
+
+const PROFANITY_WORDS = [
+  'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'piss',
+  'nigger', 'nigga', 'faggot', 'retard', 'whore', 'slut',
+];
+
+function containsFlaggedContent(text) {
+  if (!text) return false;
+  const lower = String(text).toLowerCase();
+  return PROFANITY_WORDS.some((w) => new RegExp(`\\b${w}\\b`, 'i').test(lower));
+}
+
+function screenChildForReview(child) {
+  const fieldsToCheck = [
+    child.name,
+    ...(child.interests || []),
+    ...(child.avoid_list || []),
+    ...(child.include_people || []),
+    ...(child.values_focus || []),
+  ];
+  return fieldsToCheck.some((v) => containsFlaggedContent(v));
+}
+
 // A matcher is either a plain substring (current behavior) or a RegExp --
+
 // use RegExp for short/generic words (like "age") that could otherwise
 // false-match inside unrelated labels (e.g. "age" inside "encourage").
 function labelMatches(label, m) {
@@ -274,7 +316,45 @@ async function sendWelcomeEmail(toEmail, childNames, deliveryTime, timezone) {
   }
 }
 
+// Fire-and-log ops alert for a content-screening-flagged submission. Never
+// throws -- a failure here just means Kyle finds out via Supabase instead
+// of email, not that the request fails.
+async function sendReviewAlertEmail(familyEmail, flaggedChildNames) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const FROM_EMAIL = process.env.FROM_EMAIL || 'Bethae <stories@bethae.com>';
+  const ALERT_EMAIL = process.env.DIGEST_EMAIL || 'kjm.buildco@gmail.com';
+  if (!RESEND_API_KEY) {
+    console.error('RESEND_API_KEY not set -- review alert NOT sent for', familyEmail);
+    return;
+  }
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: [ALERT_EMAIL],
+        subject: `Bethae: signup flagged for review (${familyEmail})`,
+        html:
+          `<p>A new signup from <strong>${escapeHtml(familyEmail)}</strong> was flagged by basic content ` +
+          `screening on the child-profile free-text fields, and was NOT auto-dispatched for story ` +
+          `generation.</p>` +
+          `<p>Flagged child profile(s): ${escapeHtml((flaggedChildNames || []).join(', ') || '(unknown)')}</p>` +
+          `<p>The family and children WERE still saved to Supabase as normal. Review the row(s), and if ` +
+          `this is a false positive, trigger their first story manually the usual way ` +
+          `(workflow_dispatch on onboard.yml).</p>`,
+      }),
+    });
+  } catch (err) {
+    console.error('Review alert email error (non-fatal):', err);
+  }
+}
+
 async function upsertFamily(supabaseUrl, serviceKey, familyData) {
+
   const res = await fetch(`${supabaseUrl}/rest/v1/families?on_conflict=email`, {
     method: 'POST',
     headers: {
@@ -293,7 +373,36 @@ async function upsertFamily(supabaseUrl, serviceKey, familyData) {
   return rows[0];
 }
 
+// Spam/abuse guard (added 2026-07-27, launch-readiness #10): counts a
+// family's existing children before inserting more, so MAX_CHILDREN is a
+// real cap across resubmissions, not just per-request. Defaults to 0 (i.e.
+// "no cap hit yet") on any error, so a Supabase hiccup here degrades to
+// the pre-2026-07-27 behavior rather than blocking a legitimate signup.
+async function countExistingChildren(supabaseUrl, serviceKey, familyId) {
+  try {
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/children?family_id=eq.${familyId}&select=id`,
+      {
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+        },
+      }
+    );
+    if (!res.ok) {
+      console.error('countExistingChildren failed (non-fatal, assuming 0):', res.status);
+      return 0;
+    }
+    const rows2 = await res.json();
+    return Array.isArray(rows2) ? rows2.length : 0;
+  } catch (err) {
+    console.error('countExistingChildren error (non-fatal, assuming 0):', err);
+    return 0;
+  }
+}
+
 // Inserts one or more children in a single request (one row per kid on
+
 // this submission, all sharing the same family_id already merged in).
 async function insertChildren(supabaseUrl, serviceKey, childDataArray) {
   const res = await fetch(`${supabaseUrl}/rest/v1/children`, {
@@ -461,6 +570,16 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Content screening (see file header). Defaults to "not flagged" on
+    // any internal error so a bug here can never block a real signup.
+    let needsReview = false;
+    try {
+      needsReview = children.some(screenChildForReview);
+    } catch (err) {
+      console.error('Content screening error (non-fatal, defaulting to not-flagged):', err);
+      needsReview = false;
+    }
+
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
@@ -473,11 +592,29 @@ module.exports = async (req, res) => {
     }
 
     const family = await upsertFamily(SUPABASE_URL, SUPABASE_SERVICE_KEY, familyData);
-    const insertedChildren = await insertChildren(
-      SUPABASE_URL,
-      SUPABASE_SERVICE_KEY,
-      children.map((c) => ({ ...c, family_id: family.id }))
-    );
+
+    // Per-family child cap (see file header) -- count what already exists,
+    // only insert up to the remaining slots.
+    const existingChildCount = await countExistingChildren(SUPABASE_URL, SUPABASE_SERVICE_KEY, family.id);
+    const remainingSlots = Math.max(0, MAX_CHILDREN - existingChildCount);
+    const childrenToInsert = children.slice(0, remainingSlots);
+    if (childrenToInsert.length < children.length) {
+      console.error('Tally webhook: dropping child row(s) beyond MAX_CHILDREN cap', {
+        email,
+        family_id: family.id,
+        existingChildCount,
+        attempted: children.length,
+        inserted: childrenToInsert.length,
+      });
+    }
+
+    const insertedChildren = childrenToInsert.length > 0
+      ? await insertChildren(
+          SUPABASE_URL,
+          SUPABASE_SERVICE_KEY,
+          childrenToInsert.map((c) => ({ ...c, family_id: family.id }))
+        )
+      : [];
 
     console.log('Tally submission synced to Supabase', {
       submissionId,
@@ -485,6 +622,7 @@ module.exports = async (req, res) => {
       child_ids: insertedChildren.map((c) => c.id),
       child_count: insertedChildren.length,
       email,
+      needsReview,
     });
 
     // Onboarding is complete once family + at least one child both exist --
@@ -500,18 +638,26 @@ module.exports = async (req, res) => {
         family.id
       );
     }
-    if (onboardingJustCompleted) {
-      await triggerOnboardingGeneration(email);
-    }
 
-    const welcomeEmailId = await sendWelcomeEmail(
-      email,
-      children.map((c) => c.name),
-      familyData.delivery_time,
-      familyData.timezone
-    );
-    if (welcomeEmailId) {
-      console.log('Welcome email sent', { email, welcomeEmailId });
+    if (needsReview) {
+      // Flagged: save is already done above, but skip auto-generation and
+      // the welcome email, and let Kyle know instead.
+      await sendReviewAlertEmail(email, children.filter(screenChildForReview).map((c) => c.name));
+    } else {
+      if (onboardingJustCompleted) {
+        await triggerOnboardingGeneration(email);
+      }
+      if (insertedChildren.length > 0) {
+        const welcomeEmailId = await sendWelcomeEmail(
+          email,
+          insertedChildren.map((c) => c.name),
+          familyData.delivery_time,
+          familyData.timezone
+        );
+        if (welcomeEmailId) {
+          console.log('Welcome email sent', { email, welcomeEmailId });
+        }
+      }
     }
 
     return res.status(200).json({
@@ -519,7 +665,7 @@ module.exports = async (req, res) => {
       family_id: family.id,
       child_ids: insertedChildren.map((c) => c.id),
       onboarding_just_completed: onboardingJustCompleted,
-      welcome_email_id: welcomeEmailId,
+      needs_review: needsReview,
     });
   } catch (err) {
     console.error('Tally webhook error:', err);
