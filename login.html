@@ -1,0 +1,178 @@
+<!doctype html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log in -- Bethae</title>
+  <style>
+  :root { --cranberry:#E0567A; --cranberry-dark:#C43D60; --amber:#F5A94E; --cream:#FFF8F2; --ink:#2B2230; --ink-soft:#5C5260; }
+  * { box-sizing: border-box; }
+body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:var(--cream); color:var(--ink); }
+.card { background:white; border-radius:16px; padding:36px 32px; box-shadow:0 4px 20px rgba(43,34,48,0.08); max-width:380px; width:92%; }
+.logo { display:flex; align-items:center; gap:10px; justify-content:center; margin-bottom:24px; color:var(--cranberry-dark); font-weight:700; font-size:1.3rem; text-decoration:none; }
+h1 { font-size:1.3rem; margin:0 0 6px; text-align:center; }
+p.sub { color:var(--ink-soft); font-size:0.92rem; text-align:center; margin:0 0 24px; }
+label { display:block; font-size:0.85rem; font-weight:600; margin-bottom:6px; }
+input { width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(43,34,48,0.18); font-size:1rem; margin-bottom:16px; }
+input:focus { outline:2px solid var(--cranberry); border-color:transparent; }
+button { width:100%; background:var(--cranberry); color:white; border:none; padding:13px; border-radius:999px; font-weight:700; font-size:0.98rem; cursor:pointer; }
+button:disabled { opacity:0.6; cursor:default; }
+button.secondary { background:none; color:var(--ink-soft); font-weight:500; margin-top:10px; font-size:0.85rem; }
+.msg { font-size:0.85rem; margin-bottom:14px; padding:10px 12px; border-radius:8px; }
+.msg.error { background:#FDEAEE; color:#B0263F; }
+.msg.ok { background:#EAF6EC; color:#1E7B34; }
+.hidden { display:none; }
+footer { text-align:center; margin-top:20px; font-size:0.82rem; color:var(--ink-soft); }
+footer a { color:var(--cranberry-dark); }
+</style>
+  </head>
+<body>
+
+  <div class="card">
+    <a class="logo" href="/index.html"><svg width="26" height="26" viewBox="0 0 220 220"><circle cx="110" cy="110" r="100" fill="#E0567A"/><path d="M75 60 C75 50 83 42 95 42 L107 42 C127 42 141 56 141 74 C141 88 133 98 121 102 C135 106 145 118 145 134 C145 154 129 170 107 170 L95 170 C83 170 75 162 75 150 Z" fill="none" stroke="#FFF8F2" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M75 60 L75 150" stroke="#FFF8F2" stroke-width="10" stroke-linecap="round"/></svg>Bethae</a>
+
+    <div id="step-email">
+    <h1>Log in to your account</h1>
+    <p class="sub">No password needed -- we'll email you a one-time code.</p>
+      <div id="email-msg"></div>
+    <label for="email">Email address</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+      <button id="send-code-btn">Send me a code</button>
+    </div>
+
+    <div id="step-code" class="hidden">
+      <h1>Enter your code</h1>
+    <p class="sub" id="code-sub">Check your email for a 6-digit code.</p>
+      <div id="code-msg"></div>
+      <label for="code">6-digit code</label>
+    <input type="text" id="code" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="one-time-code">
+    <button id="verify-btn">Verify &amp; log in</button>
+    <button class="secondary" id="back-btn">Use a different email</button>
+  </div>
+
+    <footer>Not signed up yet? <a href="/index.html">Get started here</a>.</footer>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://cuqhyabaorkjxtvovkio.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Qi9i7NTOrFoHO4IcOp1Fog_V-MbKesU';
+
+const stepEmail = document.getElementById('step-email');
+const stepCode = document.getElementById('step-code');
+const emailInput = document.getElementById('email');
+const codeInput = document.getElementById('code');
+const emailMsg = document.getElementById('email-msg');
+const codeMsg = document.getElementById('code-msg');
+const codeSub = document.getElementById('code-sub');
+const sendBtn = document.getElementById('send-code-btn');
+const verifyBtn = document.getElementById('verify-btn');
+
+function showMsg(el, text, type) {
+    el.innerHTML = text ? '<div class="msg ' + type + '">' + text + '</div>' : '';
+           }
+
+function setBusy(btn, busy, label) {
+    btn.disabled = busy;
+  btn.textContent = busy ? 'One moment...' : label;
+}
+
+let pendingEmail = '';
+
+document.getElementById('send-code-btn').addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    showMsg(emailMsg, '', '');
+  if (!email || !email.includes('@')) {
+    showMsg(emailMsg, 'Enter a valid email address.', 'error');
+    return;
+  }
+  setBusy(sendBtn, true, 'Send me a code');
+  try {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/otp', {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email }),
+});
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showMsg(emailMsg, data.msg || data.error_description || 'Could not send a code. Please try again in a minute.', 'error');
+      setBusy(sendBtn, false, 'Send me a code');
+      return;
+    }
+    pendingEmail = email;
+    codeSub.textContent = 'We sent a code to ' + email + '.';
+    stepEmail.classList.add('hidden');
+    stepCode.classList.remove('hidden');
+    codeInput.focus();
+  } catch (err) {
+    showMsg(emailMsg, 'Network error -- please try again.', 'error');
+  }
+  setBusy(sendBtn, false, 'Send me a code');
+           });
+
+document.getElementById('back-btn').addEventListener('click', () => {
+    stepCode.classList.add('hidden');
+  stepEmail.classList.remove('hidden');
+  showMsg(codeMsg, '', '');
+  codeInput.value = '';
+});
+
+document.getElementById('verify-btn').addEventListener('click', async () => {
+    const token = codeInput.value.trim();
+  showMsg(codeMsg, '', '');
+  if (!/^\d{6}$/.test(token)) {
+    showMsg(codeMsg, 'Enter the 6-digit code from your email.', 'error');
+    return;
+  }
+  setBusy(verifyBtn, true, 'Verify & log in');
+  try {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/verify', {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'email', email: pendingEmail, token: token }),
+});
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.access_token) {
+      showMsg(codeMsg, data.msg || data.error_description || 'That code did not work -- check it and try again.', 'error');
+      setBusy(verifyBtn, false, 'Verify & log in');
+      return;
+}
+
+    const session = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: data.expires_at || (Math.floor(Date.now() / 1000) + (data.expires_in || 3600)),
+      email: pendingEmail,
+};
+    localStorage.setItem('bethae_session', JSON.stringify(session));
+
+    const claimRes = await fetch('/api/auth/claim-family', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + data.access_token },
+});
+    const claimData = await claimRes.json().catch(() => ({}));
+
+    if (!claimRes.ok || !claimData.ok) {
+      if (claimRes.status === 404) {
+        showMsg(codeMsg, 'We could not find an account for this email. If you have not signed up yet, <a href="/index.html">start here</a>.', 'error');
+} else {
+        showMsg(codeMsg, 'Logged in, but could not link your account. Please try again shortly.', 'error');
+}
+      localStorage.removeItem('bethae_session');
+      setBusy(verifyBtn, false, 'Verify & log in');
+      return;
+}
+
+    showMsg(codeMsg, 'You are in! Redirecting...', 'ok');
+    window.location.href = '/account.html';
+} catch (err) {
+    showMsg(codeMsg, 'Network error -- please try again.', 'error');
+    setBusy(verifyBtn, false, 'Verify & log in');
+}
+});
+
+codeInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') verifyBtn.click(); });
+emailInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendBtn.click(); });
+</script>
+
+</body>
+</html>
