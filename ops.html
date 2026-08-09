@@ -5,61 +5,66 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Bethae -- Ops</title>
 <style>
-  body { font-family: Georgia, serif; max-width: 720px; margin: 40px auto; padding: 0 20px; color: #3a2a2f; background: #FFF8F2; }
-  h1 { color: #C43D60; margin-bottom: 4px; }
-  .subtitle { color: #7a6a6f; font-size: 14px; margin-bottom: 24px; }
-  .card { background: #fff; border: 1px solid #f0d8de; border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; }
-  .card h2 { margin: 0 0 10px; font-size: 16px; color: #C43D60; }
-  .stat-row { display: flex; gap: 24px; flex-wrap: wrap; }
-  .stat { text-align: center; }
-  .stat .n { font-size: 28px; font-weight: bold; }
-  .stat .l { font-size: 12px; color: #7a6a6f; text-transform: uppercase; letter-spacing: 0.03em; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #f0e0e4; }
-  th { color: #7a6a6f; font-weight: normal; font-size: 12px; text-transform: uppercase; }
-  .empty { color: #7a6a6f; font-style: italic; font-size: 14px; }
-  .flag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; background: #fde6ea; color: #C43D60; }
-  .note { font-size: 13px; color: #7a6a6f; }
-  #keyGate { text-align: center; margin-top: 80px; }
-  #keyGate input { font-family: inherit; padding: 8px 12px; border: 1px solid #f0d8de; border-radius: 6px; width: 240px; }
-  #keyGate button { font-family: inherit; padding: 8px 16px; border-radius: 6px; border: none; background: #C43D60; color: white; cursor: pointer; margin-left: 6px; }
-  #err { color: #C43D60; margin-top: 10px; font-size: 14px; }
-  #refresh { float: right; font-size: 13px; background: none; border: 1px solid #f0d8de; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-family: inherit; }
+body { font-family: Georgia, serif; max-width: 720px; margin: 40px auto; padding: 0 20px; color: #3a2a2f; background: #FFF8F2; }
+h1 { color: #C43D60; margin-bottom: 4px; }
+.subtitle { color: #7a6a6f; font-size: 14px; margin-bottom: 24px; }
+.card { background: #fff; border: 1px solid #f0d8de; border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; }
+.card h2 { margin: 0 0 10px; font-size: 16px; color: #C43D60; }
+.stat-row { display: flex; gap: 24px; flex-wrap: wrap; }
+.stat { text-align: center; }
+.stat .n { font-size: 28px; font-weight: bold; }
+.stat .l { font-size: 12px; color: #7a6a6f; text-transform: uppercase; letter-spacing: 0.03em; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #f0e0e4; }
+th { color: #7a6a6f; font-weight: normal; font-size: 12px; text-transform: uppercase; }
+.empty { color: #7a6a6f; font-style: italic; font-size: 14px; }
+.flag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; background: #fde6ea; color: #C43D60; }
+.note { font-size: 13px; color: #7a6a6f; }
+#keyGate { text-align: center; margin-top: 80px; }
+#keyGate input { font-family: inherit; padding: 8px 12px; border: 1px solid #f0d8de; border-radius: 6px; width: 240px; }
+#keyGate button { font-family: inherit; padding: 8px 16px; border-radius: 6px; border: none; background: #C43D60; color: white; cursor: pointer; margin-left: 6px; }
+#err { color: #C43D60; margin-top: 10px; font-size: 14px; }
+#refresh { float: right; font-size: 13px; background: none; border: 1px solid #f0d8de; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-family: inherit; }
 </style>
 </head>
 <body>
 
 <div id="keyGate">
-  <p>Enter the ops view key to continue.</p>
-  <input id="keyInput" type="password" placeholder="ops key">
-  <button onclick="submitKey()">View</button>
-  <div id="err"></div>
+<p>Enter the ops view key to continue.</p>
+<input id="keyInput" type="password" placeholder="ops key">
+<button onclick="submitKey()">View</button>
+<div id="err"></div>
 </div>
 
 <div id="dashboard" style="display:none">
-  <button id="refresh" onclick="load()">Refresh</button>
-  <h1>Bethae Ops</h1>
-  <div class="subtitle" id="generatedAt"></div>
+<button id="refresh" onclick="load()">Refresh</button>
+<h1>Bethae Ops</h1>
+<div class="subtitle" id="generatedAt"></div>
 
-  <div class="card">
-    <h2>Families</h2>
-    <div class="stat-row" id="familyStats"></div>
-  </div>
+<div class="card">
+<h2>Families</h2>
+<div class="stat-row" id="familyStats"></div>
+</div>
 
-  <div class="card">
-    <h2>Signups this week</h2>
-    <div id="signupsBox"></div>
-  </div>
+<div class="card">
+<h2>Customer type</h2>
+<div class="stat-row" id="customerTypeStats"></div>
+</div>
 
-  <div class="card">
-    <h2>Stuck / flagged stories</h2>
-    <div id="stuckBox"></div>
-  </div>
+<div class="card">
+<h2>Signups this week</h2>
+<div id="signupsBox"></div>
+</div>
 
-  <div class="card">
-    <h2>Revenue</h2>
-    <p class="note" id="mrrNote"></p>
-  </div>
+<div class="card">
+<h2>Stuck / flagged stories</h2>
+<div id="stuckBox"></div>
+</div>
+
+<div class="card">
+<h2>Revenue</h2>
+<p class="note" id="mrrNote"></p>
+</div>
 </div>
 
 <script>
@@ -67,79 +72,96 @@ function getKey() { return localStorage.getItem('bethae_ops_key') || ''; }
 function setKey(k) { localStorage.setItem('bethae_ops_key', k); }
 
 function submitKey() {
-  setKey(document.getElementById('keyInput').value.trim());
-  load();
+setKey(document.getElementById('keyInput').value.trim());
+load();
 }
 
 async function load() {
-  const key = getKey();
-  if (!key) return; // stay on the gate
-  document.getElementById('err').textContent = '';
-  try {
-    const res = await fetch('/api/ops/summary?key=' + encodeURIComponent(key));
-    if (res.status === 401) {
-      document.getElementById('keyGate').style.display = 'block';
-      document.getElementById('dashboard').style.display = 'none';
-      document.getElementById('err').textContent = 'Wrong key.';
-      return;
-    }
-    if (res.status === 503) {
-      document.getElementById('err').textContent = 'Ops view not configured yet on the server (OPS_VIEW_SECRET missing).';
-      return;
-    }
-    if (!res.ok) {
-      document.getElementById('err').textContent = 'Error loading ops data (' + res.status + ').';
-      return;
-    }
-    const data = await res.json();
-    render(data);
-    document.getElementById('keyGate').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-  } catch (e) {
-    document.getElementById('err').textContent = 'Could not reach the ops endpoint.';
-  }
+const key = getKey();
+if (!key) return; // stay on the gate
+document.getElementById('err').textContent = '';
+try {
+const res = await fetch('/api/ops/summary?key=' + encodeURIComponent(key));
+if (res.status === 401) {
+document.getElementById('keyGate').style.display = 'block';
+document.getElementById('dashboard').style.display = 'none';
+document.getElementById('err').textContent = 'Wrong key.';
+return;
+}
+if (res.status === 503) {
+document.getElementById('err').textContent = 'Ops view not configured yet on the server (OPS_VIEW_SECRET missing).';
+return;
+}
+if (!res.ok) {
+document.getElementById('err').textContent = 'Error loading ops data (' + res.status + ').';
+return;
+}
+const data = await res.json();
+render(data);
+document.getElementById('keyGate').style.display = 'none';
+document.getElementById('dashboard').style.display = 'block';
+} catch (e) {
+document.getElementById('err').textContent = 'Could not reach the ops endpoint.';
+}
 }
 
 function render(data) {
-  document.getElementById('generatedAt').textContent = 'Generated ' + new Date(data.generated_at).toLocaleString();
+document.getElementById('generatedAt').textContent = 'Generated ' + new Date(data.generated_at).toLocaleString();
 
-  const counts = data.family_status_counts || {};
-  const order = ['active', 'paused', 'canceled'];
-  let statsHtml = '';
-  for (const st of order) {
-    statsHtml += '<div class="stat"><div class="n">' + (counts[st] || 0) + '</div><div class="l">' + st + '</div></div>';
-  }
-  statsHtml += '<div class="stat"><div class="n">' + data.total_families + '</div><div class="l">total</div></div>';
-  document.getElementById('familyStats').innerHTML = statsHtml;
+const counts = data.family_status_counts || {};
+const order = ['active', 'paused', 'canceled'];
+let statsHtml = '';
+for (const st of order) {
+statsHtml += '<div class="stat"><div class="n">' + (counts[st] || 0) + '</div><div class="l">' + st + '</div></div>';
+}
+statsHtml += '<div class="stat"><div class="n">' + data.total_families + '</div><div class="l">total</div></div>';
+document.getElementById('familyStats').innerHTML = statsHtml;
 
-  const signups = data.signups_this_week.families || [];
-  if (signups.length === 0) {
-    document.getElementById('signupsBox').innerHTML = '<p class="empty">None this week.</p>';
-  } else {
-    let rows = signups.map(f =>
-      '<tr><td>' + f.email + '</td><td>' + new Date(f.created_at).toLocaleDateString() + '</td><td>' + f.status + '</td></tr>'
-    ).join('');
-    document.getElementById('signupsBox').innerHTML =
-      '<table><tr><th>Email</th><th>Signed up</th><th>Status</th></tr>' + rows + '</table>';
-  }
+// customer_type is a free-text field, not a fixed enum (deliberately --
+// new categories like founding_tester/beta_customer/customer get added
+// over time as the tester-vs-real-customer distinction evolves). Render
+// whatever values actually exist rather than assuming a closed list, so
+// this card never needs a code change when a new type shows up.
+const typeCounts = data.customer_type_counts || {};
+const typeKeys = Object.keys(typeCounts).sort();
+let typeStatsHtml = '';
+if (typeKeys.length === 0) {
+typeStatsHtml = '<p class="empty">No data.</p>';
+} else {
+for (const t of typeKeys) {
+typeStatsHtml += '<div class="stat"><div class="n">' + typeCounts[t] + '</div><div class="l">' + t + '</div></div>';
+}
+}
+document.getElementById('customerTypeStats').innerHTML = typeStatsHtml;
 
-  const stuck = data.stuck_stories.stories || [];
-  if (stuck.length === 0) {
-    document.getElementById('stuckBox').innerHTML = '<p class="empty">None -- all clear.</p>';
-  } else {
-    let rows = stuck.map(s =>
-      '<tr><td>' + s.family_email + '</td><td>' + s.deliver_on + '</td><td><span class="flag">' + s.status + '</span></td></tr>'
-    ).join('');
-    document.getElementById('stuckBox').innerHTML =
-      '<table><tr><th>Family</th><th>Deliver on</th><th>Status</th></tr>' + rows + '</table>';
-  }
+const signups = data.signups_this_week.families || [];
+if (signups.length === 0) {
+document.getElementById('signupsBox').innerHTML = '<p class="empty">None this week.</p>';
+} else {
+let rows = signups.map(f =>
+'<tr><td>' + f.email + '</td><td>' + new Date(f.created_at).toLocaleDateString() + '</td><td>' + f.status + '</td><td>' + (f.customer_type || '') + '</td></tr>'
+).join('');
+document.getElementById('signupsBox').innerHTML =
+'<table><tr><th>Email</th><th>Signed up</th><th>Status</th><th>Type</th></tr>' + rows + '</table>';
+}
 
-  document.getElementById('mrrNote').textContent = data.mrr_note;
+const stuck = data.stuck_stories.stories || [];
+if (stuck.length === 0) {
+document.getElementById('stuckBox').innerHTML = '<p class="empty">None -- all clear.</p>';
+} else {
+let rows = stuck.map(s =>
+'<tr><td>' + s.family_email + '</td><td>' + s.deliver_on + '</td><td><span class="flag">' + s.status + '</span></td></tr>'
+).join('');
+document.getElementById('stuckBox').innerHTML =
+'<table><tr><th>Family</th><th>Deliver on</th><th>Status</th></tr>' + rows + '</table>';
+}
+
+document.getElementById('mrrNote').textContent = data.mrr_note;
 }
 
 // Auto-load if a key is already saved from a previous visit.
 if (getKey()) {
-  load();
+load();
 }
 </script>
 
