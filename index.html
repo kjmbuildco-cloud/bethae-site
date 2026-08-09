@@ -40,11 +40,23 @@ align-items: center;
 justify-content: space-between;
 padding: 24px 6vw;
 }
+.logo-block {
+display: flex;
+flex-direction: column;
+gap: 2px;
+}
 .logo {
 font-size: 1.5rem;
 font-weight: 700;
 color: var(--cranberry-dark);
 letter-spacing: 0.5px;
+}
+.motto {
+font-size: 0.75rem;
+color: var(--ink-soft);
+font-style: italic;
+margin-left: 46px;
+letter-spacing: 0.2px;
 }
 .nav-cta {
 background: var(--cranberry);
@@ -317,15 +329,6 @@ color: var(--ink-soft);
 font-size: 0.96rem;
 padding-left: 24px;
 }
-.draft-note {
-max-width: 760px;
-margin: 0 auto;
-padding: 0 6vw 24px;
-text-align: center;
-font-size: 0.82rem;
-color: var(--ink-soft);
-opacity: 0.75;
-}
 footer {
 text-align: center;
 padding: 48px 6vw 64px;
@@ -340,23 +343,26 @@ margin-bottom: 20px;
 <body>
 
 <nav>
+<div class="logo-block">
 <div class="logo" style="display:flex;align-items:center;gap:10px;"><svg width="36" height="36" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><defs><linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#E0567A"/><stop offset="100%" stop-color="#C43D60"/></linearGradient></defs><circle cx="110" cy="110" r="100" fill="url(#sunGrad)"/><path d="M75 60 C75 50 83 42 95 42 L107 42 C127 42 141 56 141 74 C141 88 133 98 121 102 C135 106 145 118 145 134 C145 154 129 170 107 170 L95 170 C83 170 75 162 75 150 Z" fill="none" stroke="#FFF8F2" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M75 60 L75 150" stroke="#FFF8F2" stroke-width="10" stroke-linecap="round"/></svg>Bethae</div>
+<div class="motto">Little moments. Lasting connection.</div>
+</div>
 <div style="display:flex;align-items:center;gap:20px;">
 <a href="/login.html" style="color:var(--cranberry-dark);font-weight:600;text-decoration:none;font-size:0.95rem;">Log in</a>
-<a class="nav-cta" href="https://tally.so/r/GxjpNQ">Join the test</a>
+<a class="nav-cta" href="https://tally.so/r/GxjpNQ">Get started</a>
 </div>
 </nav>
 
 <header class="hero">
 <h1>A brand-new bedtime story for your child, <span>every single night.</span></h1>
-<p>Bethae writes a personalized story for your little one — their name, their favorite things, their pace — and delivers it straight to your inbox before lights-out. We're testing with a small group of families before opening things up. Free to try, no strings attached.</p>
+<p>Bethae writes a personalized story for your little one — their name, their favorite things, their pace — and delivers it straight to your inbox before lights-out. Free to try, no strings attached.</p>
 <a class="cta-button" href="https://tally.so/r/GxjpNQ" id="signup">I want in</a>
-<div class="cta-sub">Takes 2 minutes. No payment info needed for testers.</div>
+<div class="cta-sub">Takes 2 minutes. No payment info needed.</div>
 </header>
 
 <div class="trust-strip">
 <ul>
-<li>Free while we're testing</li>
+<li>Free to get started</li>
 <li>No credit card required</li>
 <li>Pause or stop anytime, right from your account</li>
 <li>Every story passes an automated safety review first</li>
@@ -383,7 +389,7 @@ margin-bottom: 20px;
 
 <section class="how">
 <div class="how-inner">
-<h2>How the test works</h2>
+<h2>How it works</h2>
 <div class="steps">
 <div class="step">
 <div class="step-num">1</div>
@@ -406,7 +412,7 @@ margin-bottom: 20px;
 
 <section class="stories-section">
 <h2>Real stories, from real Bethae families</h2>
-<p class="stories-intro">These aren't marketing copy — they're actual stories generated for families testing Bethae right now, spanning our youngest testers to our oldest. Names changed for privacy.</p>
+<p class="stories-intro">These aren't marketing copy — they're actual stories generated for real Bethae families, spanning our youngest to our oldest. Names changed for privacy.</p>
 
 <div class="story-card">
 <div class="story-meta">Milo, age 6 · loves baseball, sports, and a good bedtime mystery</div>
@@ -612,7 +618,7 @@ The end. Sweet dreams, Cole and Finn.</div>
 
 <details class="faq-item">
 <summary>What does it cost?</summary>
-<p>Testing is completely free right now — no credit card required. When we introduce paid plans, current testers will get advance notice before anything changes.</p>
+<p>It's free to join right now — no credit card required. When we introduce paid plans, everyone already signed up will get advance notice before anything changes.</p>
 </details>
 
 <details class="faq-item">
@@ -627,13 +633,11 @@ The end. Sweet dreams, Cole and Finn.</div>
 
 </section>
 
-<div class="draft-note">Page content updated 2026-08-09 — sample stories, About, and FAQ copy are a first draft, ready for your review.</div>
-
 <footer>
 <div class="footer-cta">
-<a class="cta-button" href="https://tally.so/r/GxjpNQ">Sign up to test Bethae</a>
+<a class="cta-button" href="https://tally.so/r/GxjpNQ">Get started with Bethae</a>
 </div>
-&copy; 2026 Bethae. A family AI project, currently in testing.
+&copy; 2026 Bethae. A family AI project.
 </footer>
 
 </body>
