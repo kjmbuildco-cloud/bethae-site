@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing — Bethae</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon.ico">
+<meta property="og:title" content="Pricing — Bethae">
+<meta property="og:description" content="Simple, flat pricing for however many kids you've got. 5-day free trial on every plan.">
+<meta property="og:url" content="https://bethae.com/pricing.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://bethae.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pricing — Bethae">
+<meta name="twitter:description" content="Simple, flat pricing for however many kids you've got. 5-day free trial on every plan.">
+<meta name="twitter:image" content="https://bethae.com/og-image.png">
+<style>
+:root {
+--cranberry: #E0567A;
+--cranberry-dark: #C43D60;
+--amber: #F5A94E;
+--cream: #FFF8F2;
+--ink: #2B2230;
+--ink-soft: #5C5260;
+}
+* { box-sizing: border-box; }
+body {
+margin: 0;
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+background: var(--cream);
+color: var(--ink);
+line-height: 1.5;
+}
+nav {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 24px 6vw;
+}
+.logo-block {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 2px;
+}
+.logo {
+font-size: 1.5rem;
+font-weight: 700;
+color: var(--cranberry-dark);
+letter-spacing: 0.5px;
+}
+.motto {
+font-size: 0.75rem;
+color: var(--ink-soft);
+font-style: italic;
+letter-spacing: 0.2px;
+}
+.nav-link {
+color: var(--cranberry-dark);
+font-weight: 600;
+text-decoration: none;
+font-size: 0.95rem;
+}
+.nav-cta {
+background: var(--cranberry);
+color: white;
+padding: 10px 20px;
+border-radius: 999px;
+text-decoration: none;
+font-weight: 600;
+font-size: 0.95rem;
+}
+header.hero {
+text-align: center;
+padding: 56px 6vw 24px;
+max-width: 780px;
+margin: 0 auto;
+}
+header.hero h1 {
+font-size: 2.4rem;
+line-height: 1.15;
+margin: 0 0 16px;
+color: var(--ink);
+}
+header.hero h1 span {
+color: var(--cranberry-dark);
+}
+header.hero p {
+font-size: 1.1rem;
+color: var(--ink-soft);
+margin: 0 auto;
+max-width: 560px;
+}
+.billing-toggle {
+display: flex;
+justify-content: center;
+gap: 8px;
+margin: 32px auto 8px;
+}
+.toggle-btn {
+font-family: inherit;
+font-size: 0.95rem;
+font-weight: 700;
+padding: 10px 22px;
+border-radius: 999px;
+border: 1px solid var(--cranberry);
+background: white;
+color: var(--cranberry-dark);
+cursor: pointer;
+}
+.toggle-btn.active {
+background: var(--cranberry);
+color: white;
+}
+.toggle-btn .save-badge {
+display: inline-block;
+margin-left: 6px;
+font-size: 0.72rem;
+font-weight: 700;
+padding: 2px 8px;
+border-radius: 999px;
+background: var(--amber);
+color: white;
+vertical-align: middle;
+}
+.toggle-btn.active .save-badge {
+background: white;
+color: var(--cranberry-dark);
+}
+.pricing-section {
+max-width: 980px;
+margin: 0 auto;
+padding: 24px 6vw 16px;
+}
+.pricing-cards {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+gap: 24px;
+margin-top: 24px;
+}
+.pricing-card {
+background: white;
+border-radius: 18px;
+padding: 32px 28px;
+box-shadow: 0 4px 16px rgba(43, 34, 48, 0.06);
+border-top: 5px solid var(--cranberry);
+text-align: center;
+display: flex;
+flex-direction: column;
+}
+.pricing-card.pricing-card-contact {
+border-top-color: var(--amber);
+justify-content: center;
+}
+.pricing-card-badge {
+display: inline-block;
+align-self: center;
+background: var(--cream);
+color: var(--cranberry-dark);
+font-weight: 700;
+font-size: 0.85rem;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+padding: 6px 16px;
+border-radius: 999px;
+margin-bottom: 20px;
+}
+.pricing-price {
+margin-bottom: 4px;
+}
+.price-annual { display: none; }
+body[data-billing="annual"] .price-monthly { display: none; }
+body[data-billing="annual"] .price-annual { display: block; }
+.price-amount {
+font-size: 2.6rem;
+font-weight: 800;
+color: var(--ink);
+}
+.price-period {
+font-size: 1rem;
+color: var(--ink-soft);
+font-weight: 600;
+margin-left: 4px;
+}
+.annual-note {
+display: none;
+font-size: 0.85rem;
+color: var(--cranberry-dark);
+font-weight: 600;
+margin: 6px 0 0;
+}
+body[data-billing="annual"] .annual-note { display: block; }
+.pricing-card-desc {
+color: var(--ink-soft);
+font-size: 0.98rem;
+margin: 18px 0 28px;
+flex-grow: 1;
+}
+.pricing-cta {
+margin-top: auto;
+}
+.trust-strip {
+max-width: 900px;
+margin: 40px auto 0;
+padding: 0 6vw;
+}
+.trust-strip ul {
+list-style: none;
+margin: 0;
+padding: 0;
+display: flex;
+flex-wrap: wrap;
+justify-content: center;
+gap: 10px 28px;
+}
+.trust-strip li {
+font-size: 0.92rem;
+color: var(--ink-soft);
+font-weight: 600;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.trust-strip li::before {
+content: "✓";
+color: var(--cranberry-dark);
+font-weight: 700;
+}
+.cta-button {
+display: inline-block;
+background: var(--cranberry);
+color: white;
+padding: 14px 30px;
+border-radius: 999px;
+text-decoration: none;
+font-weight: 700;
+font-size: 1rem;
+box-shadow: 0 8px 24px rgba(224, 86, 122, 0.35);
+}
+.pricing-card-contact .cta-button {
+background: var(--amber);
+box-shadow: 0 8px 24px rgba(245, 169, 78, 0.35);
+}
+.pricing-note {
+text-align: center;
+max-width: 620px;
+margin: 32px auto 0;
+color: var(--ink-soft);
+font-size: 0.9rem;
+}
+footer {
+text-align: center;
+padding: 56px 6vw 64px;
+color: var(--ink-soft);
+font-size: 0.9rem;
+}
+.footer-cta {
+margin-bottom: 20px;
+}
+</style>
+</head>
+<body data-billing="monthly">
+
+<nav>
+<div class="logo-block">
+<div class="logo" style="display:flex;align-items:center;gap:10px;"><svg width="36" height="36" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><defs><linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#E0567A"/><stop offset="100%" stop-color="#C43D60"/></linearGradient></defs><circle cx="110" cy="110" r="100" fill="url(#sunGrad)"/><path d="M75 60 C75 50 83 42 95 42 L107 42 C127 42 141 56 141 74 C141 88 133 98 121 102 C135 106 145 118 145 134 C145 154 129 170 107 170 L95 170 C83 170 75 162 75 150 Z" fill="none" stroke="#FFF8F2" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M75 60 L75 150" stroke="#FFF8F2" stroke-width="10" stroke-linecap="round"/></svg>Bethae</div>
+<div class="motto">Little moments. Lasting connection.</div>
+</div>
+<div style="display:flex;align-items:center;gap:20px;">
+<a class="nav-link" href="/pricing.html">Pricing</a>
+<a class="nav-link" href="/login.html">Log in</a>
+<a class="nav-cta" href="https://tally.so/r/GxjpNQ">Get started</a>
+</div>
+</nav>
+
+<header class="hero">
+<h1>Simple pricing for <span>every family.</span></h1>
+<p>One flat membership, however many kids you've got. No per-story charges, no surprises — just pick the tier that covers your family.</p>
+</header>
+
+<div class="billing-toggle">
+<button type="button" class="toggle-btn active" data-billing="monthly" onclick="setBilling('monthly')">Monthly</button>
+<button type="button" class="toggle-btn" data-billing="annual" onclick="setBilling('annual')">Annual <span class="save-badge">1 month free</span></button>
+</div>
+
+<section class="pricing-section">
+<div class="pricing-cards">
+
+<div class="pricing-card">
+<div class="pricing-card-badge">1–2 kids</div>
+<div class="pricing-price">
+<span class="price-monthly"><span class="price-amount">$9.99</span><span class="price-period">/month</span></span>
+<span class="price-annual"><span class="price-amount">$109.89</span><span class="price-period">/year</span></span>
+</div>
+<div class="annual-note">Billed once a year — like getting one month free.</div>
+<p class="pricing-card-desc">Covers up to 2 children, each with their own personalized story every night.</p>
+<a class="cta-button pricing-cta" href="https://tally.so/r/GxjpNQ">Start your free trial</a>
+</div>
+
+<div class="pricing-card">
+<div class="pricing-card-badge">3–4 kids</div>
+<div class="pricing-price">
+<span class="price-monthly"><span class="price-amount">$12.98</span><span class="price-period">/month</span></span>
+<span class="price-annual"><span class="price-amount">$142.78</span><span class="price-period">/year</span></span>
+</div>
+<div class="annual-note">Billed once a year — like getting one month free.</div>
+<p class="pricing-card-desc">Covers up to 4 children, each with their own personalized story every night.</p>
+<a class="cta-button pricing-cta" href="https://tally.so/r/GxjpNQ">Start your free trial</a>
+</div>
+
+<div class="pricing-card pricing-card-contact">
+<div class="pricing-card-badge">5+ kids</div>
+<p class="pricing-card-desc">Have a bigger family? We're setting these up individually for now — reach out and we'll get you sorted.</p>
+<a class="cta-button pricing-cta" href="mailto:stories@bethae.com?subject=Pricing%20for%20a%20bigger%20family">Contact us</a>
+</div>
+
+</div>
+</section>
+
+<div class="trust-strip">
+<ul>
+<li>5-day free trial on every plan — no charge until it ends</li>
+<li>Cancel anytime, right from your account</li>
+<li>Flat pricing — no per-story fees, ever</li>
+</ul>
+</div>
+
+<p class="pricing-note">Adding a child later just moves your family to the next tier — we'll let you know before anything changes on your bill.</p>
+
+<footer>
+<div class="footer-cta">
+<a class="cta-button" href="https://tally.so/r/GxjpNQ">Get started with Bethae</a>
+</div>
+&copy; 2026 Bethae. A family AI project.
+</footer>
+
+<script>
+function setBilling(mode) {
+document.body.setAttribute('data-billing', mode);
+document.querySelectorAll('.toggle-btn').forEach(function(btn) {
+btn.classList.toggle('active', btn.getAttribute('data-billing') === mode);
+});
+}
+</script>
+
+</body>
+</html>
